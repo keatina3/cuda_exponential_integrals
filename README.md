@@ -1,6 +1,5 @@
   <h1 class="title page-title"><span class="field field--name-title field--type-string field--label-hidden">5615-03 - Cuda Exponential Integral calculation</span>
 </h1>
-<h2>5615-03 - Cuda Exponential Integral calculation</h2>
 
 <p>The goal of this assignment is to develop a fast cuda implementation of the provided exponential integral source code. This code integrates the integrals of the exponential functions, from E_0 to E_n. You can find more information about the algorithm in:<br />
 http://mathworld.wolfram.com/En-Function.html<br />
