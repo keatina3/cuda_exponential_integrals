@@ -1,49 +1,6 @@
   <h1 class="title page-title"><span class="field field--name-title field--type-string field--label-hidden">5615-03 - Cuda Exponential Integral calculation</span>
 </h1>
 
-
-    </div>
-  </div>
-<div id="block-bartik-content" class="block block-system block-system-main-block">
-  
-    
-      <div class="content">
-      
-<article data-history-node-id="1807" role="article" about="/node/1807" class="node node--type-assignment node--view-mode-full clearfix">
-  <header>
-    
-        
-          <div class="node__meta">
-        <article typeof="schema:Person" about="/user/18" class="profile">
-  <a href="/blog/18">View recent blog entries</a></article>
-
-        <span>
-          Submitted by <span class="field field--name-uid field--type-entity-reference field--label-hidden"><a title="View user profile." href="/user/18" lang="" about="/user/18" typeof="schema:Person" property="schema:name" datatype="" class="username">jose</a></span>
- on <span class="field field--name-created field--type-created field--label-hidden">Wed, 2019/03/27 - 10:50</span>
-        </span>
-        
-      </div>
-      </header>
-  <div class="node__content clearfix">
-    
-  <div class="field field--name-field-course-reference field--type-entity-reference field--label-inline">
-    <div class="field__label">Course Reference</div>
-              <div class="field__item"><a href="/node/5" hreflang="en">5615</a></div>
-          </div>
-
-  <div class="field field--name-field-assignment-number field--type-integer field--label-inline">
-    <div class="field__label">Assignment Number</div>
-              <div class="field__item">3</div>
-          </div>
-
-  <div class="field field--name-field-due-date field--type-datetime field--label-inline">
-    <div class="field__label">Due Date</div>
-              <div class="field__item"><time datetime="2019-04-26T16:00:00Z" class="datetime">Fri, 2019/04/26 - 17:00</time>
-</div>
-          </div>
-
-            <div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-hidden field__item"><h2>5615-03 - Cuda Exponential Integral calculation</h2>
-
 <p>The goal of this assignment is to develop a fast cuda implementation of the provided exponential integral source code. This code integrates the integrals of the exponential functions, from E_0 to E_n. You can find more information about the algorithm in:<br />
 http://mathworld.wolfram.com/En-Function.html<br />
 http://mathworld.wolfram.com/ExponentialIntegral.html<br />
