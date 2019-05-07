@@ -1,22 +1,18 @@
-CC=g++
-#CFLAGS= -g -pedantic -W -Wall -L/usr/lib
-CFLAGS= -O3 -finline-functions -ffast-math -fomit-frame-pointer -funroll-loops
+CC		= g++
+CFLAGS	= -g -pedantic -W -Wall
+#CFLAGS	= -O3 -finline-functions -ffast-math -fomit-frame-pointer -funroll-loops
 
-INCPATH       = -I. -I.
+LDFLAGS	= 
+#INCPATH	=       = -I. -I.
 
-TARGET=main.o
-EXEC=exponentialIntegral.out
+OBJECTS	= main.o ser_expInt.o utils.o
 
+TARGET	= exponentialIntegral.out
 
-all: $(TARGET)
-#	$(CC) -Wall -o ${EXEC} ${TARGET}
-	$(CC) -Wall -o ${EXEC} ${TARGET} -lefence
-	
+all: $(OBJECTS)
+	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LDFLAGS)
 
-%.o: %.cpp Makefile
-	$(CC) $(CFLAGS) -c $(INCPATH) $<
-	
-install:
+.PHONY: clean
 
 clean:
-	rm -f *.o ${TARGET}
+	$(RM) $(OBJECTS) $(TARGET)
