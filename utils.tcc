@@ -7,8 +7,8 @@ T sse(T* gpu_vals, std::vector<std::vector<T> > &cpu_vals){
     T sse = 0.0;
     for(unsigned int i=0;i<n;i++)
         for(unsigned int j=0;j<numSamples;j++)
-            sse += (gpu_vals[j+i*numSamples] - cpu_vals[i][numSamples]) *
-                             (gpu_vals[j+i*numSamples] - cpu_vals[i][numSamples]);
+            sse += (gpu_vals[j+i*numSamples] - cpu_vals[i][j]) *
+                             (gpu_vals[j+i*numSamples] - cpu_vals[i][j]);
 
     return sse;
 }
