@@ -1,15 +1,15 @@
-#include <iostream>
+#include <vector>
+#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include "utils.h"
 
 bool cpu=true, verbose=false, timing=false;
-// n is the maximum order of the exponential integral that we are going to test
-// numberOfSamples is the number of samples in the interval [0,10] that we are going to calculate
-unsigned int maxIterations = 2E09, n=10, numberOfSamples=10;
+unsigned int maxIters = 2E09, n=10, numSamples=10;
 double a=0.0, b=10.0;
 
 int parseArguments (int argc, char **argv) {
-    int c;    
+    int c; 
 
     while ((c = getopt (argc, argv, "chi:n:m:a:b:tv")) != -1) {
         switch(c) {
@@ -18,11 +18,11 @@ int parseArguments (int argc, char **argv) {
             case 'h':
                 printUsage(); exit(0); break;
             case 'i':
-                maxIterations = atoi(optarg); break;
+                maxIters = atoi(optarg); break;
             case 'n':
                 n = atoi(optarg); break;
             case 'm':
-                numberOfSamples = atoi(optarg); break;
+                numSamples = atoi(optarg); break;
             case 'a':
                 a = atof(optarg); break;
             case 'b':

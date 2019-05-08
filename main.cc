@@ -5,19 +5,28 @@
 
 #include <iostream>
 #include <vector>
+#include <stdlib.h>
 #include <sys/time.h>
 #include "utils.h"
 #include "ser_expInt.h"
 
+extern void GPUexponentialIntegralFloat(float *results, int block_size_X, int block_size_Y);
+
 int main(int argc, char **argv){
-    unsigned int ui,uj;
     struct timeval expoStart, expoEnd;
+    double timeTotalCpu=0.0;
+    double x, division;
+
+    std::vector<std::vector<float> > resultsFloatCpu;
+    std::vector<std::vector<double> > resultsDoubleCpu;
+    float *resultsFloatGPU;
+    double *resultsDoubleGPU;
 
     parseArguments(argc, argv);
 
     if (verbose) {
         std::cout << "n=" << n << std::endl;
-        std::cout << "numberOfSamples=" << numberOfSamples << std::endl;
+        std::cout << "numSamples=" << numSamples << std::endl;
         std::cout << "a=" << a << std::endl;
         std::cout << "b=" << b << std::endl;
         std::cout << "timing=" << timing << std::endl;
@@ -33,55 +42,70 @@ int main(int argc, char **argv){
         std::cout << "Incorrect orders ("<<n<<") have been stated!" << std::endl;
         return 0;
     }
-    if (numberOfSamples<=0) {
-        std::cout << "Incorrect number of samples ("<<numberOfSamples<<
+    if (numSamples<=0) {
+        std::cout << "Incorrect number of samples ("<<numSamples<<
                                 ") have been stated!" << std::endl;
         return 0;
     }
 
-    std::vector< std::vector<float>> resultsFloatCpu;
-    std::vector< std::vector<double>> resultsDoubleCpu;
-
-    double timeTotalCpu=0.0;
-
     try {
-        resultsFloatCpu.resize(n,std::vector<float>(numberOfSamples));
+        resultsFloatCpu.resize(n,std::vector<float>(numSamples));
     } catch (std::bad_alloc const&) {
         std::cout << "resultsFloatCpu memory allocation fail!" << std::endl;  exit(1);
     }
     try {
-        resultsDoubleCpu.resize(n,std::vector< double >(numberOfSamples));
+        resultsDoubleCpu.resize(n,std::vector<double>(numSamples));
     } catch (std::bad_alloc const&) {
-        std::cout << "resultsDoubleCpu memory allocation fail!" << std::endl; exit(1);
+        std::cout << "resultsDoubleCpu memory allocation fail!" << std::endl;  exit(1);
+    }
+    try {
+        resultsFloatGPU = (float*)malloc(n*numSamples*sizeof(float));
+    } catch (std::bad_alloc const&) {
+        std::cout << "resultsFloatGPU memory allocation fail!" << std::endl;  exit(1);
+    }
+    try {
+        resultsDoubleGPU = (double*)malloc(n*numSamples*sizeof(double));
+    } catch (std::bad_alloc const&) {
+        std::cout << "resultsFloatGPU memory allocation fail!" << std::endl;  exit(1);
     }
 
-    double x,division=(b-a)/((double)(numberOfSamples));
+    division=(b-a)/((double)(numSamples));
 
-    if (cpu) {
+    if(cpu){
         gettimeofday(&expoStart, NULL);
-        for (ui=1;ui<=n;ui++) {
-            for (uj=1;uj<=numberOfSamples;uj++) {
+        for(unsigned int ui=1;ui<=n;ui++){
+            for(unsigned int uj=1;uj<=numSamples;uj++){
                 x=a+uj*division;
-                resultsFloatCpu[ui-1][uj-1]=exponentialIntegralFloat (ui,x);
-                resultsDoubleCpu[ui-1][uj-1]=exponentialIntegralDouble (ui,x);
+                resultsFloatCpu[ui-1][uj-1]=exponentialIntegralFloat(ui,x);
+                resultsDoubleCpu[ui-1][uj-1]=exponentialIntegralDouble(ui,x);
             }
         }
         gettimeofday(&expoEnd, NULL);
         timeTotalCpu=((expoEnd.tv_sec + expoEnd.tv_usec*0.000001) 
                             - (expoStart.tv_sec + expoStart.tv_usec*0.000001));
     }
-
-    if (timing) {
-        if (cpu) {
-            printf ("calculating the exponentials on the cpu took: %f seconds\n",timeTotalCpu);
+    
+    GPUexponentialIntegralFloat(resultsFloatGPU,32,32);
+    
+    if(timing){
+        if(cpu){
+            std::cout << "calculating the exponentials on the cpu took: " << 
+                    timeTotalCpu<< " seconds" << std::endl;
         }
     }
 
-    if (verbose) {
-        if (cpu) {
-            outputResultsCpu (resultsFloatCpu,resultsDoubleCpu);
+    if(verbose){
+        if(cpu){
+            //outputResultsCpu(resultsFloatCpu,resultsDoubleCpu);
+            outputResults(resultsFloatGPU,resultsFloatCpu);
         }
     }
     
+    std::cout << "cpu[0][10] = " << resultsFloatCpu[0][10] << std::endl;  
+    std::cout << "gpu[0][10] = " << resultsFloatGPU[10] << std::endl;  
+    float SSE = sse(resultsFloatGPU, resultsFloatCpu);
+    std::cout << "Float SSE = " << SSE << std::endl; 
+    
+    free(resultsFloatGPU); free(resultsDoubleGPU); 
     return 0;
 }
