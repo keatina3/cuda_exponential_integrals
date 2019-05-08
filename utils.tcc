@@ -24,7 +24,7 @@ void outputResults(T* gpu_vals, std::vector<std::vector<T> > &cpu_vals){
             if(fabs(cpu_vals[i][j] - gpu_vals[j+i*numSamples]) > 1.E-5){
                 std::cout << "CPU==>  (" << 
                         i+1 << "," << x <<")=" << cpu_vals[i][j] << " ,";
-                std::cout << "GPU++>  (" << 
+                std::cout << "GPU==>  (" << 
                         i+1 << "," << x <<")=" << gpu_vals[j+i*numSamples] << std::endl;
             }
         }
