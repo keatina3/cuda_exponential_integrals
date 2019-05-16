@@ -5,7 +5,7 @@
 
 #include <iostream>
 #include <vector>
-#include <stdlib.h>
+#include <cstdlib>
 #include <sys/time.h>
 #include "utils.h"
 #include "ser_expInt.h"

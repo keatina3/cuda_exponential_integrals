@@ -1,5 +1,5 @@
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 #include <iostream>
 #include <vector>
 #include <limits>
@@ -25,7 +25,7 @@ float exponentialIntegralFloat(const int n, const float x){
             c=bigfloat;
             d=1.0/b;
             h=d;
-            for(i=1;i<=maxIters;i++){
+            for(i=1;i<=(int)maxIters;i++){
                 a=-i*(nm1+i);
                 b+=2.0;
                 d=1.0/(a*d+b);
@@ -42,7 +42,7 @@ float exponentialIntegralFloat(const int n, const float x){
         } else { // Evaluate series
             ans=(nm1!=0 ? 1.0/nm1 : -log(x)-eulerConstant); // First term
             fact=1.0;
-            for(i=1;i<=maxIters;i++){
+            for(i=1;i<=(int)maxIters;i++){
                 fact*=-x/i;
                 if(i != nm1){
                     del = -fact/(i-nm1);
@@ -82,7 +82,7 @@ double exponentialIntegralDouble(const int n, const double x) {
             c=bigDouble;
             d=1.0/b;
             h=d;
-            for(i=1;i<=maxIters;i++){
+            for(i=1;i<=(int)maxIters;i++){
                 a=-i*(nm1+i);
                 b+=2.0;
                 d=1.0/(a*d+b);
@@ -99,7 +99,7 @@ double exponentialIntegralDouble(const int n, const double x) {
         } else { // Evaluate series
             ans=(nm1!=0 ? 1.0/nm1 : -log(x)-eulerConstant); // First term
             fact=1.0;
-            for(i=1;i<=maxIters;i++){
+            for(i=1;i<=(int)maxIters;i++){
                 fact*=-x/i;
                 if(i != nm1){
                     del = -fact/(i-nm1);
