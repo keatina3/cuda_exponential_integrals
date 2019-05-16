@@ -4,6 +4,10 @@
 extern bool verbose,timing,cpu;
 extern unsigned int maxIters, n, numSamples;
 extern double a,b;     // The interval that we are going to use
+extern const double eulerConstant;
+extern const double epsilon;
+extern const float bigfloat;
+extern const double bigDouble;
 
 int parseArguments(int argc, char **argv);
 void printUsage();

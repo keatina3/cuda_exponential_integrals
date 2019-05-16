@@ -7,9 +7,6 @@
 #include "utils.h"
 
 float exponentialIntegralFloat(const int n, const float x){
-    static const float eulerConstant=0.5772156649015329;
-    float epsilon=1.E-30;
-    float bigfloat=std::numeric_limits<float>::max();
     int i,ii,nm1=n-1;
     float a,b,c,d,del,fact,h,psi,ans=0.0;
 
@@ -63,12 +60,8 @@ float exponentialIntegralFloat(const int n, const float x){
 }
 
 double exponentialIntegralDouble(const int n, const double x) {
-    static const double eulerConstant=0.5772156649015329;
-    double epsilon=1.E-30;
-    double bigDouble=std::numeric_limits<double>::max();
     int i,ii,nm1=n-1;
     double a,b,c,d,del,fact,h,psi,ans=0.0;
-
 
     if(n<0.0 || x<0.0 || (x==0.0&&( (n==0) || (n==1) ) ) ) {
         std::cout << "Bad arguments were passed to the exponentialIntegral function call" << std::endl;

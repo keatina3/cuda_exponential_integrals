@@ -1,12 +1,17 @@
+#include <limits>
 #include <vector>
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 #include <unistd.h>
 #include "utils.h"
 
 bool cpu=true, verbose=false, timing=false;
 unsigned int maxIters = 2E09, n=10, numSamples=10;
 double a=0.0, b=10.0;
+extern const double eulerConstant=0.5772156649015329;
+extern const double epsilon=1.E-30;
+extern const float bigfloat=std::numeric_limits<float>::max();
+extern const double bigDouble=std::numeric_limits<double>::max();
 
 int parseArguments (int argc, char **argv) {
     int c; 
