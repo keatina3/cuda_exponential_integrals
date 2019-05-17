@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <vector>
+#include <mpi.h>
 #include "utils.h"
 #include "gpu_expInt.h"
 
@@ -112,7 +113,17 @@ __device__ float calcExp_shared(float *consts, int n, float x){
     return ans;
 }
 
-__global__ void calcExpIntegral_shared(float *res_glob, int n, int numSamples, int a, float division, int maxIters){
+__global__ void calcExpIntegral_simple(float *res_glob, int n0, int n, int numSamples, int a, float division, int maxIters){
+    int idx = blockIdx.x*blockDim.x + threadIdx.x;
+    int idy = blockIdx.y*blockDim.y + threadIdx.y;
+    float x = a + (idy+1)*division;
+    
+    if(n0 <= idx && idx<n && idy<numSamples){
+        res_glob[idy + idx*numSamples] = calcExp_simple(idx+1, x, maxIters);
+    }
+}
+
+__global__ void calcExpIntegral_shared(float *res_glob, int n0, int n, int numSamples, int a, float division, int maxIters){
     int idx = blockIdx.x*blockDim.x + threadIdx.x;
     int idy = blockIdx.y*blockDim.y + threadIdx.y;
     extern __shared__ float consts[];
@@ -124,39 +135,64 @@ __global__ void calcExpIntegral_shared(float *res_glob, int n, int numSamples, i
 
     float x = a + (idy+1)*division;
     
-    if(idx<n && idy < numSamples){
+    if(n0 <= idx && idx<n && idy < numSamples){
         res_glob[idy + idx*numSamples] = calcExp_shared(consts, idx+1, x); 
     }
 }
 
-__global__ void calcExpIntegral_glob(float *res_glob, int n, int numSamples, int a, float division, int maxIters){
-    int idx = blockIdx.x*blockDim.x + threadIdx.x;
-    int idy = blockIdx.y*blockDim.y + threadIdx.y;
-    float x = a + (idy+1)*division;
-    
-    if(idx<n && idy<numSamples){
-        res_glob[idy + idx*numSamples] = calcExp_simple(idx+1, x, maxIters);
-    }
-}
-
 extern void GPUexponentialIntegralFloat(float *results, int block_size_X, int block_size_Y){
-    float *res_glob;
+    float *res_glob, *dynam_glob;
+    cudaStream_t stream[2];
     //size_t results_glob_s;
     //int pitch;
     float division = (b-a)/numSamples;
     
+    bool streams=false, shared=true, dynamic=false;
+
     printf("size of n,numsamples = %d,%d\n",n,numSamples);
     cudaMalloc( (void**)&res_glob, n*numSamples*sizeof(float));
-    
+    cudaMalloc( (void**)&dynam_glob, n*numSamples*sizeof(float));
+    //cudaMallocPitch
+
+    findBestDevice();
+
+    if(streams){
+        for(int i=0;i<2;i++)
+            cudaStreamCreate(&stream[i]);
+    }
+
     dim3 dimBlock(block_size_X, block_size_Y);
     dim3 dimGrid((n/dimBlock.x)+(!(n%dimBlock.x)?0:1),
                 (numSamples/dimBlock.y)+(!(numSamples%dimBlock.y)?0:1));
     
-    cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-    
-    //calcExpIntegral_glob<<<dimGrid, dimBlock>>>(res_glob, n, numSamples, a, division, maxIters);
-    calcExpIntegral_shared<<<dimGrid, dimBlock, 4*sizeof(float)>>>(res_glob, n, numSamples, a, division, maxIters);
-    
-    cudaMemcpy(results, res_glob, n*numSamples*sizeof(float), cudaMemcpyDeviceToHost);
+    if(shared){
+        cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+        calcExpIntegral_shared<<<dimGrid, dimBlock, 4*sizeof(float)>>>
+                            (res_glob, 0, n, numSamples, a, division, maxIters);
+    } else if(dynamic) {
+        calcExpIntegral_dynamic<<<dimGrid,dimBlock, 4*sizeof(float)>>>
+                            (res_glob, dynam_glob, n, numSamples, a, division, maxIters);        
+    } else {
+        calcExpIntegral_simple<<<dimGrid, dimBlock>>>
+                            (res_glob, 0, n, numSamples, a, division, maxIters);
+    }
+
+    if(streams){
+        //calcExpIntegral_shared<<<dimGrid, dimBlock, 4*sizeof(float), stream[0]>>>
+        //              (res_glob, 0, 0, numSamples, a, division, maxIters);
+        for(int i=0; i<2;i++){
+            calcExpIntegral_shared<<<dimGrid, dimBlock, 4*sizeof(float), stream[i]>>>
+                            (res_glob, i*((n/2)+1), (i+1)*(n/2), numSamples, a, division, maxIters);
+            cudaMemcpyAsync(&results[i*((n/2)+1)*numSamples], &res_glob[i*((n/2)+1)*numSamples], 
+                        (n/2)*numSamples*sizeof(float), cudaMemcpyDeviceToHost, stream[i]);
+        }
+        //cudaMemcpy(&results[(n-1)*numSamples], &res_glob[(n-1)*numSamples], 
+        //              numSamples*sizeof(float), cudaMemcpyDeviceToHost);
+        for(int i=0;i<2;i++)
+            cudaStreamDestroy(stream[i]);
+    } else {
+        cudaMemcpy(results, res_glob, n*numSamples*sizeof(float), cudaMemcpyDeviceToHost);
+    }
+
     cudaFree(res_glob);
 }

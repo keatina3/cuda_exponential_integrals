@@ -1,8 +1,3 @@
-///// Created by Jose Mauricio Refojo - 2014-04-02      Last changed: 2017-04-05
-//------------------------------------------------------------------------------
-// File : main.cpp
-//------------------------------------------------------------------------------
-
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -11,6 +6,7 @@
 #include "ser_expInt.h"
 
 extern void GPUexponentialIntegralFloat(float *results, int block_size_X, int block_size_Y);
+extern void GPUexponentialIntegralFloat_mpi(int argc, char **argv, float *results, int block_size_X, int block_size_Y);
 
 int main(int argc, char **argv){
     struct timeval expoStart, expoEnd;
@@ -21,9 +17,9 @@ int main(int argc, char **argv){
     std::vector<std::vector<double> > resultsDoubleCpu;
     float *resultsFloatGPU;
     double *resultsDoubleGPU;
-
+    
     parseArguments(argc, argv);
-
+    
     if (verbose) {
         std::cout << "n=" << n << std::endl;
         std::cout << "numSamples=" << numSamples << std::endl;
@@ -59,12 +55,12 @@ int main(int argc, char **argv){
         std::cout << "resultsDoubleCpu memory allocation fail!" << std::endl;  exit(1);
     }
     try {
-        resultsFloatGPU = (float*)malloc(n*numSamples*sizeof(float));
+        resultsFloatGPU = (float*)calloc(n*numSamples,sizeof(float));
     } catch (std::bad_alloc const&) {
         std::cout << "resultsFloatGPU memory allocation fail!" << std::endl;  exit(1);
     }
     try {
-        resultsDoubleGPU = (double*)malloc(n*numSamples*sizeof(double));
+        resultsDoubleGPU = (double*)calloc(n*numSamples,sizeof(double));
     } catch (std::bad_alloc const&) {
         std::cout << "resultsFloatGPU memory allocation fail!" << std::endl;  exit(1);
     }
@@ -85,7 +81,13 @@ int main(int argc, char **argv){
                             - (expoStart.tv_sec + expoStart.tv_usec*0.000001));
     }
     
-    GPUexponentialIntegralFloat(resultsFloatGPU,32,32);
+    if(gpu){
+        if(!mpi){
+            GPUexponentialIntegralFloat(resultsFloatGPU,block_size_X,block_size_Y);
+        } else {
+            GPUexponentialIntegralFloat_mpi(argc, argv, resultsFloatGPU, block_size_Y, block_size_X);
+        }
+    }
     
     if(timing){
         if(cpu){
@@ -106,6 +108,8 @@ int main(int argc, char **argv){
     float SSE = sse(resultsFloatGPU, resultsFloatCpu);
     std::cout << "Float SSE = " << SSE << std::endl; 
     
-    free(resultsFloatGPU); free(resultsDoubleGPU); 
+    free(resultsFloatGPU); 
+    free(resultsDoubleGPU);
+    
     return 0;
 }

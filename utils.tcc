@@ -30,3 +30,13 @@ void outputResults(T* gpu_vals, std::vector<std::vector<T> > &cpu_vals){
         }
     }
 }
+
+template <typename T>
+void printGrid(T* vals){
+    for(unsigned int i=0;i<n;i++){
+        for(unsigned int j=0;j<numSamples;j++){
+            std::cout << vals[j + i*numSamples] << " ";;
+        }
+        std::cout << std::endl;
+    }
+}
