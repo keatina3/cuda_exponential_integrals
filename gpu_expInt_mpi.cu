@@ -2,7 +2,7 @@
 #include "utils.h"
 #include "gpu_expInt.h"
 
-__global__ void calcExpIntegral_mpi(float *res_glob, int n0, int n, int numSamples, int a, float division, int maxIters){
+__global__ void calcExpIntegral_portion(float *res_glob, int n0, int n, int numSamples, int a, float division, int maxIters){
     int idx = blockIdx.x*blockDim.x + threadIdx.x;
     int idy = blockIdx.y*blockDim.y + threadIdx.y;
     extern __shared__ float consts[];
@@ -38,28 +38,26 @@ extern void GPUexponentialIntegralFloat_mpi(int argc, char **argv, float *result
  
     num_devices = findBestDevice();
 
-	if (num_devices>1) {
-		mycard = myid%num_devices;
-		printf("This is process %d, numberOfDevices = %d cardForThisProcess=%d\n", myid, num_devices,mycard);		
-		cudaSetDevice(mycard);
-	}
-	
+    if (num_devices>1) {
+        mycard = myid%num_devices;
+        printf("This is process %d, numberOfDevices = %d cardForThisProcess=%d\n", myid, num_devices,mycard);		
+        cudaSetDevice(mycard);
+    }
+
     res_loc = (float *)malloc(n_loc*numSamples*sizeof(float)); 
-	cudaMalloc((void **) &res_gpu, n_loc*numSamples*sizeof(float));
-	
-	dim3 dimBlock(block_size_X, block_size_Y);
-	dim3 dimGrid((n_loc/dimBlock.x) + (!(n_loc%dimBlock.x)?0:1), 
-	                    (numSamples/dimBlock.x) + (!(numSamples%dimBlock.x)?0:1));
+    cudaMalloc((void **) &res_gpu, n_loc*numSamples*sizeof(float));
+
+    dim3 dimBlock(block_size_X, block_size_Y);
+    dim3 dimGrid((n_loc/dimBlock.x) + (!(n_loc%dimBlock.x)?0:1), 
+            (numSamples/dimBlock.x) + (!(numSamples%dimBlock.x)?0:1));
     
     cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-    calcExpIntegral_mpi<<<dimGrid,dimBlock,4*sizeof(float)>>>
+    calcExpIntegral_portion<<<dimGrid,dimBlock,4*sizeof(float)>>>
                     (res_gpu, s, n_loc, numSamples, a, division, maxIters); 
     
     cudaMemcpy(res_loc, res_gpu, n_loc*numSamples*sizeof(float), cudaMemcpyDeviceToHost);
     
     MPI_Isend(res_loc, numSamples*(e-s+1), MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &req[0]);
-    MPI_Wait(&req[0], MPI_STATUS_IGNORE);  
-    
     if(myid==0){
         for(int i=0;i<nprocs;i++){
             decomp1d(n, nprocs, i, &s, &e);

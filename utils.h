@@ -1,8 +1,8 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_
 
-extern bool verbose,timing,cpu,gpu,mpi,shared,dynamic,streams;
-extern int block_size_X, block_size_Y;
+extern bool verbose,timing,cpu,gpu,mpi,shared,dynamic;
+extern int block_size_X, block_size_Y, numStreams;
 extern unsigned int maxIters, n, numSamples;
 extern double a,b;     // The interval that we are going to use
 extern const double eulerConstant;

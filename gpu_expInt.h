@@ -20,7 +20,7 @@ __global__ void calcExpIntegral_simple(float *res_glob, int n0, int n,
                         int numSamples, int a, float division, int maxIters);
 __global__ void calcExpIntegral_dynamic(float *res_glob, float *dynam_glob, int n, 
                         int numSamples, int a, float division, int maxIters);
-__global__ void calcExpIntegral_mpi(float *res_glob, int n0, int n, 
+__global__ void calcExpIntegral_portion(float *res_glob, int n0, int n, 
                         int numSamples, int a, float division, int maxIters);
 
 

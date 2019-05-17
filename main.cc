@@ -12,6 +12,7 @@ int main(int argc, char **argv){
     struct timeval expoStart, expoEnd;
     double timeTotalCpu=0.0;
     double x, division;
+    float SSE;
 
     std::vector<std::vector<float> > resultsFloatCpu;
     std::vector<std::vector<double> > resultsDoubleCpu;
@@ -84,6 +85,7 @@ int main(int argc, char **argv){
     if(gpu){
         if(!mpi){
             GPUexponentialIntegralFloat(resultsFloatGPU,block_size_X,block_size_Y);
+            //GPUexponentialIntegralDouble(resultsFloatGPU,block_size_X,block_size_Y);
         } else {
             GPUexponentialIntegralFloat_mpi(argc, argv, resultsFloatGPU, block_size_Y, block_size_X);
         }
@@ -100,14 +102,11 @@ int main(int argc, char **argv){
         if(cpu){
             //outputResultsCpu(resultsFloatCpu,resultsDoubleCpu);
             outputResults(resultsFloatGPU,resultsFloatCpu);
+            SSE = sse(resultsFloatGPU, resultsFloatCpu);
+            std::cout << "Float SSE = " << SSE << std::endl; 
         }
     }
-    
-    std::cout << "cpu[0][10] = " << resultsFloatCpu[0][10] << std::endl;  
-    std::cout << "gpu[0][10] = " << resultsFloatGPU[10] << std::endl;  
-    float SSE = sse(resultsFloatGPU, resultsFloatCpu);
-    std::cout << "Float SSE = " << SSE << std::endl; 
-    
+     
     free(resultsFloatGPU); 
     free(resultsDoubleGPU);
     

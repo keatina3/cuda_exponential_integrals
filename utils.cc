@@ -6,9 +6,9 @@
 #include "utils.h"
 
 bool cpu=true, verbose=false, timing=false, gpu=true;
-bool mpi = false, shared = true, dynamic = false, streams = false;
+bool mpi = false, shared = true, dynamic = false;
 unsigned int maxIters = 2E09, n=10, numSamples=10;
-int block_size_X=32, block_size_Y=32;
+int block_size_X=32, block_size_Y=32, numStreams;
 double a=0.0, b=10.0;
 extern const double eulerConstant=0.5772156649015329;
 extern const double epsilon=1.E-30;
@@ -18,7 +18,7 @@ extern const double bigDouble=std::numeric_limits<double>::max();
 int parseArguments (int argc, char **argv) {
     int c; 
 
-    while ((c = getopt (argc, argv, "chi:n:m:a:b:x:y:tvgpds")) != -1) {
+    while ((c = getopt (argc, argv, "chi:n:m:a:b:x:y:tvgpds:S")) != -1) {
         switch(c) {
             case 'c':
                 cpu=false; break;   //Skip the CPU test
@@ -47,9 +47,11 @@ int parseArguments (int argc, char **argv) {
             case 'p':
                 mpi = true; break;
             case 'd':
-                dynamic=true; break;
+                dynamic=true; shared=false; break;
             case 's':
-                streams=true; break;
+                numStreams=atoi(optarg); shared=false; break;
+            case 'S':
+                shared=false; break;
             default:
                 fprintf(stderr, "Invalid option given\n");
                 printUsage();
@@ -76,7 +78,8 @@ void printUsage () {
     printf("      -v           : will activate the verbose mode  (default: no)\n");
     printf("      -p           : will activate MPI test on the GPUs and turns off verbose (default: no).\n");
     printf("      -d           : will turn on dynamic parallelism (default: no).\n");
-    printf("      -s           : will tuen on streams (default: no).\n");
+    printf("      -s           : will turn on streams (default: no).\n");
+    printf("      -s           : will turn off shared memory (default: yes).\n");
     printf("      -x           : will set the x dimension block size (default: 32)\n");
     printf("      -y           : will set the y dimension block size (default: 32)\n");
     printf("     \n");

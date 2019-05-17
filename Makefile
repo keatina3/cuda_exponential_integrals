@@ -5,9 +5,9 @@ NVCC 	= nvcc -Xptxas -v
 
 #flags
 CXXFLAGS	= -g -W -Wall
-#CXXFLAGS	= -O3 -finline-functions -ffast-math -fomit-frame-pointer -funroll-loops -lm
-NVCCFLAGS 	= -g -G --use_fast_math -arch=sm_35 --relocatable-device-code true
-#NVCCFLAGS 	= -v --use_fast_math -arch=sm_35 --relocatable-device-code true
+#CXXFLAGS	= -O3 -finline-functions -ffast-math -fomit-frame-pointer -funroll-loops
+NVCCFLAGS 	= -g -G -Xptxas -v --use_fast_math -arch=sm_35 --relocatable-device-code true
+#NVCCFLAGS 	= -Xptxas -v --use_fast_math -arch=sm_35 --relocatable-device-code true
 LDFLAGS		= -lmpi
 
 #objects

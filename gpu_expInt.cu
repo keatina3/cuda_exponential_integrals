@@ -11,10 +11,6 @@ __device__ float calcExp_simple(int n, float x, int maxIters){
     float a,b,c,d,del,fact,h,psi,ans=0.0;
     int i,ii;
 
-    //if( n<0.0 || x<0.0 || (fabsf(x)<epsilon && ((n==0) || (n==1)) ) ) {
-    //    std::cout << "Bad arguments were passed to the exponentialIntegral function call" << std::endl;
-    //    exit(1);
-    //}
     if(n==0){
         ans=expf(-x)/x;
     } else {
@@ -64,10 +60,6 @@ __device__ float calcExp_shared(float *consts, int n, float x){
     float a,b,c,d,del,fact,h,psi,ans=0.0;
     int i,ii;
 
-    //if( n<0.0 || x<0.0 || (fabsf(x)<consts[1] && ((n==0) || (n==1)) ) ) {
-    //    std::cout << "Bad arguments were passed to the exponentialIntegral function call" << std::endl;
-    //    exit(1);
-    //}
     if(n==0){
         ans=expf(-x)/x;
     } else {
@@ -142,13 +134,12 @@ __global__ void calcExpIntegral_shared(float *res_glob, int n0, int n, int numSa
 
 extern void GPUexponentialIntegralFloat(float *results, int block_size_X, int block_size_Y){
     float *res_glob, *dynam_glob;
-    cudaStream_t stream[2];
+    cudaStream_t stream[numStreams];
     //size_t results_glob_s;
     //int pitch;
     float division = (b-a)/numSamples;
+    int tmp = n - (numStreams-1)*n/numStreams;
     
-    bool streams=false, shared=true, dynamic=false;
-
     printf("size of n,numsamples = %d,%d\n",n,numSamples);
     cudaMalloc( (void**)&res_glob, n*numSamples*sizeof(float));
     cudaMalloc( (void**)&dynam_glob, n*numSamples*sizeof(float));
@@ -156,8 +147,8 @@ extern void GPUexponentialIntegralFloat(float *results, int block_size_X, int bl
 
     findBestDevice();
 
-    if(streams){
-        for(int i=0;i<2;i++)
+    if(numStreams){
+        for(int i=0;i<numStreams;i++)
             cudaStreamCreate(&stream[i]);
     }
 
@@ -166,30 +157,46 @@ extern void GPUexponentialIntegralFloat(float *results, int block_size_X, int bl
                 (numSamples/dimBlock.y)+(!(numSamples%dimBlock.y)?0:1));
     
     if(shared){
-        cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+        if(true) cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);   // change this to a flag //
         calcExpIntegral_shared<<<dimGrid, dimBlock, 4*sizeof(float)>>>
                             (res_glob, 0, n, numSamples, a, division, maxIters);
     } else if(dynamic) {
         calcExpIntegral_dynamic<<<dimGrid,dimBlock, 4*sizeof(float)>>>
                             (res_glob, dynam_glob, n, numSamples, a, division, maxIters);        
+    } else if(numStreams) {
+        dim3 dimGrid((n/(numStreams*dimBlock.x))+(!((n/numStreams)%dimBlock.x)?0:1),
+                    (numSamples/dimBlock.y)+(!(numSamples%dimBlock.y)?0:1));
+        dim3 endGrid((tmp/dimBlock.x) + (!(tmp%dimBlock.x)?0:1),
+                    (numSamples/dimBlock.y)+(!(numSamples%dimBlock.y)?0:1));
+        std::cout << "TEST\n"; 
+        for(int i=0;i<numStreams-1;i++){
+            calcExpIntegral_portion<<<dimGrid,dimBlock,4*sizeof(float),stream[i]>>>
+                        (&res_glob[numSamples*i*n/numStreams], i*n/numStreams, 
+                         n/numStreams, numSamples, a, division, maxIters);
+        }
+        calcExpIntegral_portion<<<endGrid,dimBlock,4*sizeof(float),stream[numStreams-1]>>>
+                (&res_glob[numSamples*(numStreams-1)*n/numStreams], (numStreams-1)*n/numStreams,
+                        tmp, numSamples, a, division, maxIters);
+
     } else {
         calcExpIntegral_simple<<<dimGrid, dimBlock>>>
                             (res_glob, 0, n, numSamples, a, division, maxIters);
     }
 
-    if(streams){
-        //calcExpIntegral_shared<<<dimGrid, dimBlock, 4*sizeof(float), stream[0]>>>
-        //              (res_glob, 0, 0, numSamples, a, division, maxIters);
-        for(int i=0; i<2;i++){
-            calcExpIntegral_shared<<<dimGrid, dimBlock, 4*sizeof(float), stream[i]>>>
-                            (res_glob, i*((n/2)+1), (i+1)*(n/2), numSamples, a, division, maxIters);
-            cudaMemcpyAsync(&results[i*((n/2)+1)*numSamples], &res_glob[i*((n/2)+1)*numSamples], 
-                        (n/2)*numSamples*sizeof(float), cudaMemcpyDeviceToHost, stream[i]);
+    if(numStreams){
+        for(int i=0; i<(numStreams-1);i++){
+            cudaMemcpyAsync(&results[numSamples*i*n/numStreams],
+                    &res_glob[numSamples*i*n/numStreams], numSamples*(n/numStreams)*sizeof(float), 
+                    cudaMemcpyDeviceToHost, stream[i]);
         }
-        //cudaMemcpy(&results[(n-1)*numSamples], &res_glob[(n-1)*numSamples], 
-        //              numSamples*sizeof(float), cudaMemcpyDeviceToHost);
-        for(int i=0;i<2;i++)
+        cudaMemcpyAsync(&results[numSamples*(numStreams-1)*n/numStreams], 
+                &res_glob[numSamples*(numStreams-1)*n/numStreams], 
+                numSamples*tmp*sizeof(float), 
+                cudaMemcpyDeviceToHost, stream[numStreams-1]);
+        
+        for(int i=0;i<numStreams;i++)
             cudaStreamDestroy(stream[i]);
+
     } else {
         cudaMemcpy(results, res_glob, n*numSamples*sizeof(float), cudaMemcpyDeviceToHost);
     }
