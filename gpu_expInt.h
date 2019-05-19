@@ -2,8 +2,8 @@
 
 #ifdef __cplusplus
 
-extern void GPUexponentialIntegralFloat(float *results, int block_size_X, int block_size_Y);
-extern void GPUexponentialIntegralFloat_mpi(int argc, char **argv, float *results, int block_size_X, int block_size_Y);
+extern void GPUexponentialIntegralFloat(float *results, int block_size_X, int block_size_Y, Tau *tau);
+extern void GPUexponentialIntegralFloat_mpi(int argc, char **argv, float *results, int block_size_X, int block_size_Y, Tau *tau);
 
 #endif
 
@@ -14,9 +14,9 @@ __device__ float calcExp_shared(float *consts, int n, float x);
 __device__ float calcExp_dynamic(float *consts, float *dynam_glob, int n, float x);
 
 
-__global__ void calcExpIntegral_glob(float *res_glob, int n0, int n, 
+__global__ void calcExpIntegral_glob(float *res_glob, int n, 
                         int numSamples, int a, float division, int maxIters);
-__global__ void calcExpIntegral_simple(float *res_glob, int n0, int n, 
+__global__ void calcExpIntegral_simple(float *res_glob, int n, 
                         int numSamples, int a, float division, int maxIters);
 __global__ void calcExpIntegral_dynamic(float *res_glob, float *dynam_glob, int n, 
                         int numSamples, int a, float division, int maxIters);

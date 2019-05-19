@@ -5,14 +5,17 @@
 #include "utils.h"
 #include "ser_expInt.h"
 
-extern void GPUexponentialIntegralFloat(float *results, int block_size_X, int block_size_Y);
-extern void GPUexponentialIntegralFloat_mpi(int argc, char **argv, float *results, int block_size_X, int block_size_Y);
+extern void GPUexponentialIntegralFloat(float *results, int block_size_X, int block_size_Y, Tau *tau);
+extern void GPUexponentialIntegralFloat_mpi(int argc, char **argv, float *results, int block_size_X, int block_size_Y, Tau *tau);
+extern void GPUexponentialIntegralDouble(double *results, int block_size_X, int block_size_Y, Tau *tau);
+extern void GPUexponentialIntegralDouble_mpi(int argc, char **argv, double *results, int block_size_X, int block_size_Y, Tau *tau);
 
 int main(int argc, char **argv){
     struct timeval expoStart, expoEnd;
     double timeTotalCpu=0.0;
     double x, division;
     float SSE;
+    Tau tau;
 
     std::vector<std::vector<float> > resultsFloatCpu;
     std::vector<std::vector<double> > resultsDoubleCpu;
@@ -20,7 +23,7 @@ int main(int argc, char **argv){
     double *resultsDoubleGPU;
     
     parseArguments(argc, argv);
-    
+   
     if (verbose) {
         std::cout << "n=" << n << std::endl;
         std::cout << "numSamples=" << numSamples << std::endl;
@@ -84,10 +87,11 @@ int main(int argc, char **argv){
     
     if(gpu){
         if(!mpi){
-            GPUexponentialIntegralFloat(resultsFloatGPU,block_size_X,block_size_Y);
-            //GPUexponentialIntegralDouble(resultsFloatGPU,block_size_X,block_size_Y);
+            GPUexponentialIntegralFloat(resultsFloatGPU,block_size_X,block_size_Y,&tau);
+            GPUexponentialIntegralDouble(resultsDoubleGPU,block_size_X,block_size_Y,&tau);
         } else {
-            GPUexponentialIntegralFloat_mpi(argc, argv, resultsFloatGPU, block_size_Y, block_size_X);
+            GPUexponentialIntegralFloat_mpi(argc, argv, resultsFloatGPU, block_size_Y, block_size_X,&tau);
+            GPUexponentialIntegralDouble_mpi(argc, argv, resultsDoubleGPU, block_size_Y, block_size_X,&tau);
         }
     }
     
@@ -96,17 +100,32 @@ int main(int argc, char **argv){
             std::cout << "calculating the exponentials on the cpu took: " << 
                     timeTotalCpu<< " seconds" << std::endl;
         }
+        if(gpu){
+            std::cout << "calculating the exponentials on the gpu took: " <<
+                    tau.float_GPU + tau.double_GPU << std::endl;
+    
+        }
     }
 
     if(verbose){
         if(cpu){
             //outputResultsCpu(resultsFloatCpu,resultsDoubleCpu);
-            outputResults(resultsFloatGPU,resultsFloatCpu);
+            //outputResults(resultsFloatGPU,resultsFloatCpu);
             SSE = sse(resultsFloatGPU, resultsFloatCpu);
             std::cout << "Float SSE = " << SSE << std::endl; 
         }
     }
-     
+
+    if(cpu){
+        write_times("cpu_times.csv", n, numSamples, shared, numStreams, nprocs, cache, block_size_X, tau, 0);  
+    }
+    if(gpu && !mpi){
+        write_times("gpu_times.csv", n, numSamples, shared, numStreams, nprocs, cache, block_size_X, tau, 1);
+    }
+    if(gpu && mpi){
+        write_times("gpu_times_mpi.csv", n, numSamples, shared, numStreams, nprocs, cache, block_size_X, tau, 1);
+    }
+
     free(resultsFloatGPU); 
     free(resultsDoubleGPU);
     

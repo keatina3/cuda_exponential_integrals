@@ -14,7 +14,7 @@ LDFLAGS		= -lmpi
 SOURCES	= *.cc
 OBJECTS	= *.o
 #CU_OBJECTS = gpu_expInt.o gpu_expInt_dynamic.o gpu_expInt_mpi.o cuda_utils.o
-CU_SOURCES = *.cu
+CU_SOURCES = *.cu doubles/*.cu
 
 
 #includes

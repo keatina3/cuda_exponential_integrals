@@ -1,6 +1,7 @@
 #include <vector>
 #include <math.h>
 #include <iostream>
+#include "utils.h"
 
 template <typename T>
 T sse(T* gpu_vals, std::vector<std::vector<T> > &cpu_vals){
@@ -11,7 +12,7 @@ T sse(T* gpu_vals, std::vector<std::vector<T> > &cpu_vals){
                              (gpu_vals[j+i*numSamples] - cpu_vals[i][j]);
 
     return sse;
-}
+};
 
 
 template <typename T>
@@ -29,7 +30,7 @@ void outputResults(T* gpu_vals, std::vector<std::vector<T> > &cpu_vals){
             }
         }
     }
-}
+};
 
 template <typename T>
 void printGrid(T* vals){
@@ -39,4 +40,4 @@ void printGrid(T* vals){
         }
         std::cout << std::endl;
     }
-}
+};
